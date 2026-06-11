@@ -745,12 +745,16 @@ $('schedToggle').addEventListener('click',()=>{
   btn.querySelector('span').textContent=open?'Hide amortization schedule':'View amortization schedule';
 });
 
-// Calculate button: compute, reveal results, then fire the in-your-face CTA
+// Calculate button: compute, reveal results, then fire the in-your-face CTA (once per session)
+let calcCtaShown=false;
 $('calcBtn').addEventListener('click',()=>{
   calc();
   $('emptyState').style.display='none';
   $('resultsArea').style.display='';
-  setTimeout(()=>openModal('deal'),350);
+  if(!calcCtaShown){
+    calcCtaShown=true;
+    setTimeout(()=>openModal('deal'),350);
+  }
 });
 </script>
 </body>
