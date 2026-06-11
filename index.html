@@ -213,10 +213,12 @@
   .modal-head h3{font-size:1.55rem;font-weight:700;margin-top:8px;line-height:1.2;
     letter-spacing:-.01em;position:relative}
   .modal-head p{color:#b9c6e4;font-size:.9rem;margin-top:8px;position:relative}
-  .modal-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.15);
-    border:none;color:#fff;width:32px;height:32px;border-radius:9px;cursor:pointer;
-    font-size:1.2rem;line-height:1;transition:.15s;z-index:2}
-  .modal-close:hover{background:rgba(255,255,255,.3)}
+  .modal-close{position:absolute;top:14px;right:14px;background:rgba(0,45,114,.12);
+    border:none;color:var(--navy);width:32px;height:32px;border-radius:9px;cursor:pointer;
+    font-size:1.25rem;line-height:1;transition:.15s;z-index:5}
+  .modal-close:hover{background:rgba(0,45,114,.22)}
+  .modal:not(.expanded) .modal-close{background:rgba(255,255,255,.18);color:#fff}
+  .modal:not(.expanded) .modal-close:hover{background:rgba(255,255,255,.32)}
   .modal-body{padding:24px 30px 28px;overflow-y:auto}
   .modal-feat{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px}
   .modal-feat .ic{flex:none;width:36px;height:36px;border-radius:10px;
@@ -225,7 +227,21 @@
   .modal-feat .ft{font-weight:700;color:var(--navy);font-size:.95rem}
   .modal-feat .fd{font-size:.8rem;color:var(--muted);margin-top:1px}
   .sched-embed-wrap{margin-top:20px;padding-top:18px;border-top:1px solid var(--line)}
-  .sched-embed-title{font-size:.95rem;font-weight:700;color:var(--navy);margin-bottom:12px}
+  .sched-embed-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;
+    width:100%;background:rgba(9,96,187,.08);border:1px solid var(--line);border-radius:9px;
+    padding:12px 16px;cursor:pointer;font-family:inherit;transition:background .15s}
+  .sched-embed-bar:hover{background:rgba(9,96,187,.14)}
+  .sched-embed-title{font-size:.95rem;font-weight:700;color:var(--navy)}
+  .se-ico{font-size:1rem;line-height:1;color:var(--navy)}
+  /* expanded: scheduler fills the modal */
+  .modal-head{transition:max-height .35s ease,padding .35s ease,opacity .25s ease;overflow:hidden}
+  .modal-intro{transition:max-height .35s ease,opacity .25s ease,margin .35s ease;overflow:hidden;
+    max-height:400px}
+  .modal.expanded .modal-head{max-height:0;padding-top:0;padding-bottom:0;opacity:0}
+  .modal.expanded .modal-intro{max-height:0;opacity:0;margin:0}
+  .modal.expanded .sched-embed-wrap{padding-top:0;border-top:none;margin-top:0}
+  .modal.expanded #SOIDIV_JamesSpence{min-height:70vh}
+  .modal.expanded .modal-body{padding-top:16px}
   @media(max-width:720px){.grid{grid-template-columns:1fr}
     .inputs{border-right:none;border-bottom:1px solid var(--line)}}
 </style>
@@ -425,27 +441,32 @@
 <!-- In-your-face modal CTA (fired on Calculate) -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <button class="modal-close" id="modalClose" aria-label="Close">×</button>
     <div class="modal-head">
-      <button class="modal-close" id="modalClose" aria-label="Close">×</button>
       <div class="eyebrow">Loan Command</div>
       <h3 id="modalTitle">See the whole deal, not just the payment.</h3>
       <p id="modalIntro">Floating-rate pricing, full profitability, and forward market conditions — built for bankers.</p>
     </div>
     <div class="modal-body">
-      <div class="modal-feat">
-        <div class="ic">📈</div>
-        <div><div class="ft">Floating rates</div><div class="fd">Model SOFR-indexed and adjustable structures.</div></div>
-      </div>
-      <div class="modal-feat">
-        <div class="ic">💰</div>
-        <div><div class="ft">Profitability</div><div class="fd">Loan-level ROE, ROA, and fee economics.</div></div>
-      </div>
-      <div class="modal-feat">
-        <div class="ic">🔭</div>
-        <div><div class="ft">Forward market conditions</div><div class="fd">Price against the forward curve and swap grid.</div></div>
+      <div class="modal-intro">
+        <div class="modal-feat">
+          <div class="ic">📈</div>
+          <div><div class="ft">Floating rates</div><div class="fd">Model SOFR-indexed and adjustable structures.</div></div>
+        </div>
+        <div class="modal-feat">
+          <div class="ic">💰</div>
+          <div><div class="ft">Profitability</div><div class="fd">Loan-level ROE, ROA, and fee economics.</div></div>
+        </div>
+        <div class="modal-feat">
+          <div class="ic">🔭</div>
+          <div><div class="ft">Forward market conditions</div><div class="fd">Price against the forward curve and swap grid.</div></div>
+        </div>
       </div>
       <div class="sched-embed-wrap">
-        <div class="sched-embed-title">Schedule a free walkthrough</div>
+        <button class="sched-embed-bar" id="schedExpand" aria-pressed="false">
+          <span class="sched-embed-title">Schedule a free walkthrough</span>
+          <span class="se-ico">⤢</span>
+        </button>
         <!-- ScheduleOnce embed START -->
         <div id="SOIDIV_JamesSpence" data-so-page="JamesSpence" data-height="550" data-style="border: 1px solid #d8d8d8; min-width: 290px; max-width: 900px;" data-psz="00"></div>
         <!-- ScheduleOnce embed END -->
@@ -691,8 +712,25 @@ function openModal(ctx){
   loadScheduler();
   modal.classList.add('open');
 }
-function closeModal(){modal.classList.remove('open');}
+function closeModal(){
+  modal.classList.remove('open');
+  // reset expand state for next open
+  const box=modal.querySelector('.modal');
+  box.classList.remove('expanded');
+  const btn=$('schedExpand');
+  if(btn){btn.setAttribute('aria-pressed','false');
+    btn.querySelector('.se-ico').textContent='⤢';}
+}
 $('headerCta').addEventListener('click',()=>openModal('header'));
+
+// Expand/collapse the scheduler to fill the modal
+const modalBox=modal.querySelector('.modal');
+$('schedExpand').addEventListener('click',()=>{
+  const exp=modalBox.classList.toggle('expanded');
+  const btn=$('schedExpand');
+  btn.setAttribute('aria-pressed',exp);
+  btn.querySelector('.se-ico').textContent=exp?'⤡':'⤢';
+});
 $('modalClose').addEventListener('click',closeModal);
 modal.addEventListener('click',e=>{if(e.target===modal)closeModal();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();}});
