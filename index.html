@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Commercial Loan Calculator</title>
+<style>
+  :root{
+    --navy:#002D72;
+    --gold:#FFBF3F;
+    --blue:#0960BB;
+    --ink:#0c1b33;
+    --paper:#f4f6fb;
+    --line:#dde3ee;
+    --muted:#5f6b82;
+    --good:#1c8d5a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    line-height:1.45;
+    padding:24px;
+  }
+  .wrap{max-width:980px;margin:0 auto}
+  header{
+    background:linear-gradient(135deg,#ffffff 0%,#eef2fa 100%);
+    color:var(--navy);border-radius:16px 16px 0 0;
+    padding:28px 32px;position:relative;overflow:hidden;
+    border:1px solid var(--line);border-bottom:none;
+  }
+  header::after{
+    content:"";position:absolute;right:-40px;top:-40px;
+    width:180px;height:180px;border-radius:50%;
+    background:radial-gradient(circle,rgba(255,191,63,.35),transparent 70%);
+  }
+  header h1{font-size:1.6rem;font-weight:700;letter-spacing:-.01em;color:var(--navy)}
+  header p{color:var(--muted);font-size:.92rem;margin-top:4px}
+  .gold-rule{height:4px;background:var(--gold)}
+  .grid{
+    display:grid;grid-template-columns:1fr 1fr;gap:0;
+    background:#fff;border-radius:0 0 16px 16px;overflow:hidden;
+    box-shadow:0 12px 40px rgba(0,45,114,.10);
+  }
+  .inputs{padding:28px 32px;border-right:1px solid var(--line)}
+  .results{padding:28px 32px;background:#fbfcfe}
+  .field{margin-bottom:18px}
+  label{display:block;font-size:.78rem;font-weight:600;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+  .inputbox{position:relative}
+  .inputbox .pre{position:absolute;left:12px;top:50%;transform:translateY(-50%);
+    color:var(--muted);font-weight:600}
+  .inputbox .post{position:absolute;right:12px;top:50%;transform:translateY(-50%);
+    color:var(--muted);font-weight:600}
+  input[type=number],select{
+    width:100%;padding:11px 14px;border:1.5px solid var(--line);
+    border-radius:9px;font-size:1rem;font-family:inherit;background:#fff;
+    transition:border-color .15s,box-shadow .15s;
+  }
+  input.pad-l{padding-left:26px}
+  input.pad-r{padding-right:42px}
+  input:focus,select:focus{outline:none;border-color:var(--blue);
+    box-shadow:0 0 0 3px rgba(9,96,187,.12)}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .seg{display:flex;border:1.5px solid var(--line);border-radius:9px;overflow:hidden}
+  .seg button{flex:1;padding:9px;background:#fff;border:none;cursor:pointer;
+    font-family:inherit;font-size:.85rem;font-weight:600;color:var(--muted);
+    transition:.15s}
+  .seg button.on{background:var(--navy);color:#fff}
+  .payment-card{
+    background:linear-gradient(135deg,var(--navy),#01285f);
+    color:#fff;border-radius:14px;padding:22px 24px;margin-bottom:20px;
+  }
+  .payment-card .lbl{font-size:.78rem;color:#aebbdc;text-transform:uppercase;
+    letter-spacing:.05em}
+  .payment-card .amt{font-size:2.5rem;font-weight:700;letter-spacing:-.02em;margin-top:2px}
+  .payment-card .sub{color:var(--gold);font-size:.85rem;font-weight:600;margin-top:4px}
+  .stat{display:flex;justify-content:space-between;padding:12px 0;
+    border-bottom:1px solid var(--line)}
+  .stat:last-child{border-bottom:none}
+  .stat .k{color:var(--muted);font-size:.9rem}
+  .stat .v{font-weight:700;font-size:.98rem}
+  .stat.balloon .v{color:var(--blue)}
+  .footnote{font-size:.74rem;color:var(--muted);margin-top:18px;line-height:1.5}
+  .chart{margin-top:6px;height:8px;border-radius:6px;overflow:hidden;display:flex}
+  .chart .p{background:var(--blue)}
+  .chart .i{background:var(--gold)}
+  .legend{display:flex;gap:18px;margin-top:10px;font-size:.78rem;color:var(--muted)}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .dot{width:10px;height:10px;border-radius:3px}
+  /* amortization schedule */
+  .sched-wrap{margin-top:20px;border-top:1px solid var(--line);padding-top:16px}
+  .sched-toggle{width:100%;display:flex;justify-content:space-between;align-items:center;
+    background:rgba(9,96,187,.06);border:1px solid var(--line);border-radius:9px;
+    padding:11px 14px;cursor:pointer;font-family:inherit;font-size:.88rem;font-weight:600;
+    color:var(--navy);transition:background .15s}
+  .sched-toggle:hover{background:rgba(9,96,187,.1)}
+  .sched-toggle .chev{transition:transform .2s}
+  .sched-toggle.open .chev{transform:rotate(180deg)}
+  .sched-scroll{margin-top:12px;max-height:340px;overflow-y:auto;border:1px solid var(--line);
+    border-radius:9px}
+  .sched-table{width:100%;border-collapse:collapse;font-size:.8rem}
+  .sched-table th{position:sticky;top:0;background:var(--navy);color:#fff;font-weight:600;
+    text-align:right;padding:9px 12px;font-size:.74rem;text-transform:uppercase;letter-spacing:.03em}
+  .sched-table th:first-child{text-align:left}
+  .sched-table td{padding:8px 12px;text-align:right;border-bottom:1px solid var(--line);
+    color:var(--ink);white-space:nowrap}
+  .sched-table td:first-child{text-align:left;color:var(--muted);font-weight:600}
+  .sched-table tr:nth-child(even){background:#fafbfe}
+  .sched-table tr.io-period{background:rgba(255,191,63,.1)}
+  .io-tag{display:inline-block;background:var(--gold);color:var(--navy);font-size:.62rem;
+    font-weight:700;padding:1px 5px;border-radius:4px;margin-right:6px;vertical-align:middle}
+  .sched-table tr.balloon-row td{background:var(--navy);color:#fff;font-weight:700;
+    border-bottom:none}
+  .sched-table tr.balloon-row td[colspan]{text-align:left;color:var(--gold)}
+  /* mode segmented control */
+  .mode-seg{display:inline-flex;margin-top:14px;background:rgba(0,45,114,.06);
+    border:1px solid var(--line);border-radius:10px;padding:3px;position:relative;z-index:2;
+    flex-wrap:wrap}
+  .mode-opt{border:none;background:none;font-family:inherit;font-size:.8rem;font-weight:700;
+    color:var(--muted);padding:7px 13px;border-radius:7px;cursor:pointer;transition:.15s;
+    white-space:nowrap}
+  .mode-opt:hover{color:var(--navy)}
+  .mode-opt.on{background:var(--navy);color:#fff;box-shadow:0 2px 6px rgba(0,45,114,.25)}
+  .mode-opt[data-mode="advanced"].on{background:var(--gold);color:var(--navy)}
+  /* banker inputs */
+  .banker-divider{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+    color:var(--blue);margin:6px 0 14px;padding-top:14px;border-top:1px solid var(--line)}
+  .banker-divider.out{color:var(--navy);margin-top:22px}
+  /* banker metrics */
+  .metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .metric{background:#fff;border:1px solid var(--line);border-radius:11px;padding:13px 14px;
+    position:relative}
+  .metric .ml{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
+    color:var(--muted)}
+  .metric .mv{font-size:1.4rem;font-weight:700;color:var(--navy);margin-top:3px;letter-spacing:-.01em}
+  .metric .msub{font-size:.68rem;color:var(--muted);margin-top:2px}
+  .mbadge{font-size:.66rem;font-weight:700;padding:2px 8px;border-radius:20px;display:inline-block;
+    margin-top:6px}
+  .mbadge.pass{background:rgba(28,141,90,.14);color:var(--good)}
+  .mbadge.fail{background:rgba(201,42,42,.12);color:#c92a2a}
+  .nii-line{margin-top:12px;background:linear-gradient(135deg,var(--navy),#01285f);color:#fff;
+    border-radius:11px;padding:13px 16px;font-size:.9rem;font-weight:600;display:flex;
+    justify-content:space-between;align-items:center}
+  .nii-line .nv{color:var(--gold);font-size:1.15rem;font-weight:700}
+  .dscr-split{margin-top:10px;font-size:.8rem;color:var(--muted);background:rgba(255,191,63,.12);
+    border-radius:9px;padding:10px 13px}
+  .dscr-split b{color:var(--navy)}
+  /* stress table */
+  .stress-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:9px}
+  .stress-table{width:100%;border-collapse:collapse;font-size:.82rem}
+  .stress-table th{background:var(--navy);color:#fff;font-weight:600;padding:9px 12px;
+    font-size:.72rem;text-transform:uppercase;letter-spacing:.03em;text-align:right;white-space:nowrap}
+  .stress-table th:first-child{text-align:left}
+  .stress-table td{padding:9px 12px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+  .stress-table td:first-child{text-align:left;font-weight:600;color:var(--muted)}
+  .stress-table tr:last-child td{border-bottom:none}
+  .stress-table tr.base td{background:rgba(9,96,187,.07)}
+  .stress-table tr.base td:first-child{color:var(--blue)}
+  .stress-table .fail-cell{color:#c92a2a;font-weight:700}
+  .stress-note{font-size:.7rem;color:var(--muted);margin-top:8px;line-height:1.45}
+  /* empty state */
+  .empty-card{display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;min-height:280px;padding:30px;border:1.5px dashed var(--line);
+    border-radius:14px;background:#fff}
+  .empty-icon{font-size:2.4rem;margin-bottom:14px;opacity:.7}
+  .empty-card p{color:var(--muted);font-size:.95rem;max-width:280px;line-height:1.5}
+  .empty-card strong{color:var(--navy)}
+  /* calculate button */
+  .calc-btn{
+    width:100%;margin-top:8px;padding:14px;border:none;border-radius:10px;
+    background:var(--navy);color:#fff;font-family:inherit;font-size:1rem;
+    font-weight:700;letter-spacing:.01em;cursor:pointer;transition:filter .15s,transform .05s;
+  }
+  .calc-btn:hover{filter:brightness(1.12)}
+  .calc-btn:active{transform:translateY(1px)}
+  /* modal CTA */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(0,20,55,.6);backdrop-filter:blur(3px);
+    display:flex;align-items:center;justify-content:center;padding:20px;
+    opacity:0;pointer-events:none;transition:opacity .25s;z-index:60;
+  }
+  .modal-overlay.open{opacity:1;pointer-events:auto}
+  .modal{
+    background:#fff;border-radius:18px;max-width:440px;width:100%;overflow:hidden;
+    box-shadow:0 30px 80px rgba(0,20,55,.45);
+    transform:scale(.9) translateY(10px);transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+    position:relative;
+  }
+  .modal-overlay.open .modal{transform:scale(1) translateY(0)}
+  .modal-head{
+    background:linear-gradient(135deg,var(--navy),#01285f);color:#fff;
+    padding:30px 30px 26px;position:relative;overflow:hidden;
+  }
+  .modal-head::after{content:"";position:absolute;right:-50px;top:-50px;width:200px;
+    height:200px;border-radius:50%;background:radial-gradient(circle,rgba(255,191,63,.3),transparent 70%)}
+  .modal-head .eyebrow{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--gold);font-weight:700;position:relative}
+  .modal-head h3{font-size:1.55rem;font-weight:700;margin-top:8px;line-height:1.2;
+    letter-spacing:-.01em;position:relative}
+  .modal-head p{color:#b9c6e4;font-size:.9rem;margin-top:8px;position:relative}
+  .modal-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.15);
+    border:none;color:#fff;width:32px;height:32px;border-radius:9px;cursor:pointer;
+    font-size:1.2rem;line-height:1;transition:.15s;z-index:2}
+  .modal-close:hover{background:rgba(255,255,255,.3)}
+  .modal-body{padding:24px 30px 28px}
+  .modal-feat{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px}
+  .modal-feat .ic{flex:none;width:36px;height:36px;border-radius:10px;
+    background:rgba(255,191,63,.18);display:flex;align-items:center;justify-content:center;
+    font-size:1.05rem}
+  .modal-feat .ft{font-weight:700;color:var(--navy);font-size:.95rem}
+  .modal-feat .fd{font-size:.8rem;color:var(--muted);margin-top:1px}
+  .modal-cta{display:block;text-align:center;text-decoration:none;margin-top:20px;
+    background:var(--gold);color:var(--navy);font-weight:700;font-size:1.02rem;
+    padding:15px;border-radius:11px;transition:filter .15s}
+  .modal-cta:hover{filter:brightness(.95)}
+  @media(max-width:720px){.grid{grid-template-columns:1fr}
+    .inputs{border-right:none;border-bottom:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Commercial Loan Calculator</h1>
+    <p>Estimate payments, total interest, and balloon balances</p>
+    <div class="mode-seg" id="modeSeg" role="tablist">
+      <button class="mode-opt on" data-mode="basic">Basic</button>
+      <button class="mode-opt" data-mode="intermediate">Intermediate</button>
+      <button class="mode-opt" data-mode="advanced">Advanced</button>
+    </div>
+  </header>
+  <div class="gold-rule"></div>
+  <div class="grid">
+    <div class="inputs">
+      <div class="field">
+        <label>Loan Amount</label>
+        <div class="inputbox">
+          <span class="pre">$</span>
+          <input type="number" id="amount" class="pad-l" value="1500000" min="0" step="1000">
+        </div>
+      </div>
+      <div class="field">
+        <label>Annual Interest Rate</label>
+        <div class="inputbox">
+          <input type="number" id="rate" class="pad-r" value="7.25" min="0" step="0.01">
+          <span class="post">%</span>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Amortization (yrs)</label>
+          <input type="number" id="amort" value="25" min="1" step="1">
+        </div>
+        <div class="field">
+          <label>Term / Balloon (yrs)</label>
+          <input type="number" id="term" value="7" min="1" step="1">
+        </div>
+      </div>
+      <div class="field">
+        <label>Interest-Only Period (mo)</label>
+        <div class="inputbox">
+          <input type="number" id="io" class="pad-r" value="0" min="0" step="1">
+          <span class="post">mo</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Payment Frequency</label>
+        <select id="freq">
+          <option value="12">Monthly</option>
+          <option value="4">Quarterly</option>
+          <option value="2">Semi-Annual</option>
+          <option value="1">Annual</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Origination Fee</label>
+        <div class="inputbox">
+          <input type="number" id="fee" class="pad-r" value="0.50" min="0" step="0.01">
+          <span class="post">%</span>
+        </div>
+      </div>
+      <div class="banker-inputs" id="bankerInputs" style="display:none">
+        <div class="banker-divider">Underwriting &amp; Profitability</div>
+        <div class="field">
+          <label>Day-Count Convention</label>
+          <select id="daycount">
+            <option value="365">30/360 (stated)</option>
+            <option value="360">Actual/360</option>
+            <option value="actual365">Actual/365</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Net Operating Income (annual)</label>
+          <div class="inputbox">
+            <span class="pre">$</span>
+            <input type="number" id="noi" class="pad-l" value="0" min="0" step="1000">
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>Collateral / Value</label>
+            <div class="inputbox">
+              <span class="pre">$</span>
+              <input type="number" id="value" class="pad-l" value="0" min="0" step="1000">
+            </div>
+          </div>
+          <div class="field">
+            <label>Cost of Funds</label>
+            <div class="inputbox">
+              <input type="number" id="cof" class="pad-r" value="4.50" min="0" step="0.01">
+              <span class="post">%</span>
+            </div>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>DSCR Min Policy</label>
+            <input type="number" id="dscrMin" value="1.25" min="0" step="0.05">
+          </div>
+          <div class="field">
+            <label>LTV Max Policy</label>
+            <div class="inputbox">
+              <input type="number" id="ltvMax" class="pad-r" value="75" min="0" step="1">
+              <span class="post">%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="calc-btn" id="calcBtn">Calculate</button>
+    </div>
+    <div class="results">
+      <div id="emptyState">
+        <div class="empty-card">
+          <div class="empty-icon">🧮</div>
+          <p>Enter your loan details and hit <strong>Calculate</strong> to see payments, interest, and balloon balance.</p>
+        </div>
+      </div>
+      <div id="resultsArea" style="display:none">
+      <div class="payment-card">
+        <div class="lbl">Periodic Payment</div>
+        <div class="amt" id="payment">$0</div>
+        <div class="sub" id="freqLabel">per month</div>
+      </div>
+      <div class="stat" id="ioRow" style="display:none"><span class="k">IO → Amortizing Payment</span><span class="v" id="ioPmt">—</span></div>
+      <div class="stat"><span class="k">Total Payments (over term)</span><span class="v" id="totalPaid">$0</span></div>
+      <div class="stat"><span class="k">Total Interest (over term)</span><span class="v" id="totalInt">$0</span></div>
+      <div class="stat balloon"><span class="k">Balloon Balance at Term End</span><span class="v" id="balloon">$0</span></div>
+      <div class="stat"><span class="k">Origination Fee</span><span class="v" id="feeAmt">$0</span></div>
+      <div class="stat"><span class="k">Effective APR (incl. fee)</span><span class="v" id="apr">0%</span></div>
+
+      <div class="banker-out" id="bankerOut" style="display:none">
+        <div class="banker-divider out">Credit Snapshot</div>
+        <div class="metric-grid">
+          <div class="metric" id="mDscr">
+            <div class="ml">DSCR</div><div class="mv" id="dscrVal">—</div>
+            <div class="mbadge" id="dscrBadge"></div>
+          </div>
+          <div class="metric" id="mLtv">
+            <div class="ml">LTV</div><div class="mv" id="ltvVal">—</div>
+            <div class="mbadge" id="ltvBadge"></div>
+          </div>
+          <div class="metric">
+            <div class="ml">Net Spread</div><div class="mv" id="spreadVal">—</div>
+            <div class="msub" id="spreadSub">over cost of funds</div>
+          </div>
+          <div class="metric">
+            <div class="ml">Yield to Bank</div><div class="mv" id="yieldVal">—</div>
+            <div class="msub" id="yieldSub">incl. fees &amp; day-count</div>
+          </div>
+        </div>
+        <div class="nii-line" id="niiLine"></div>
+        <div id="dscrSplit" class="dscr-split" style="display:none"></div>
+
+        <div class="banker-divider out">Rate Stress (payment &amp; DSCR)</div>
+        <div class="stress-scroll">
+          <table class="stress-table">
+            <thead id="stressHead"></thead>
+            <tbody id="stressBody"></tbody>
+          </table>
+        </div>
+        <p class="stress-note">Stress applies to the amortizing payment (post-IO where applicable). DSCR shown when NOI is entered.</p>
+      </div>
+
+      <div style="margin-top:18px">
+        <label style="margin-bottom:8px">Principal vs. Interest (over term)</label>
+        <div class="chart">
+          <div class="p" id="barP"></div>
+          <div class="i" id="barI"></div>
+        </div>
+        <div class="legend">
+          <span><span class="dot" style="background:var(--blue)"></span>Principal</span>
+          <span><span class="dot" style="background:var(--gold)"></span>Interest</span>
+        </div>
+      </div>
+      <div class="sched-wrap">
+        <button class="sched-toggle" id="schedToggle" aria-expanded="false">
+          <span>View amortization schedule</span><span class="chev">▾</span>
+        </button>
+        <div class="sched-scroll" id="schedScroll" style="display:none">
+          <table class="sched-table">
+            <thead id="schedHead"></thead>
+            <tbody id="schedBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <p class="footnote">Estimates only. Assumes a fixed rate; payments are interest-only during any IO period, then amortize over the remaining amortization term with a balloon due at term end. Actual terms, fees, and day-count conventions may vary. Not a commitment to lend.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- In-your-face modal CTA (fired on Calculate) -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head">
+      <button class="modal-close" id="modalClose" aria-label="Close">×</button>
+      <div class="eyebrow">Loan Command</div>
+      <h3 id="modalTitle">This deal could be worth more.</h3>
+      <p id="modalIntro">You just ran a fixed-rate estimate. See what the full picture looks like in Loan Command.</p>
+    </div>
+    <div class="modal-body">
+      <div class="modal-feat">
+        <div class="ic">📈</div>
+        <div><div class="ft">Floating rates</div><div class="fd">Model SOFR-indexed and adjustable structures.</div></div>
+      </div>
+      <div class="modal-feat">
+        <div class="ic">💰</div>
+        <div><div class="ft">Profitability</div><div class="fd">Loan-level ROE, ROA, and fee economics.</div></div>
+      </div>
+      <div class="modal-feat">
+        <div class="ic">🔭</div>
+        <div><div class="ft">Forward market conditions</div><div class="fd">Price against the forward curve and swap grid.</div></div>
+      </div>
+      <a class="modal-cta" href="https://southstatecorrespondent.com/loan-command-demo-scheduler/" target="_blank" rel="noopener">Try Loan Command for Free →</a>
+    </div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const fmt=n=>'$'+Math.round(n).toLocaleString('en-US');
+const fmt2=n=>'$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const freqNames={12:'per month',4:'per quarter',2:'per half-year',1:'per year'};
+
+let lastSchedule=[];   // store for the table
+
+function calc(){
+  const P=+$('amount').value||0;
+  const annual=(+$('rate').value||0)/100;
+  const amortY=+$('amort').value||1;
+  const termY=+$('term').value||1;
+  const f=+$('freq').value;
+  const feePct=(+$('fee').value||0)/100;
+  const ioMonths=+$('io').value||0;
+  const dc=$('daycount').value;
+  // Day-count interest multiplier vs. the nominal periodic rate.
+  // Actual/360 accrues ~365/360 more; 30/360 and Actual/365 ≈ stated.
+  const dcMult = dc==='360' ? 365/360 : 1;
+
+  const i=annual/f;                       // nominal periodic rate
+  const iAccr=i*dcMult;                   // accrual rate after day-count
+  const nTerm=Math.min(termY,amortY)*f;   // periods until balloon
+  let ioPeriods=Math.round(ioMonths/12*f);// IO periods, converted to payment frequency
+  ioPeriods=Math.min(ioPeriods,nTerm);    // can't exceed term
+  const amortPeriodsTotal=amortY*f;       // full amortization horizon
+
+  // Amortizing payment is sized to fully retire principal over the
+  // amortization periods that remain AFTER the IO phase ends.
+  const nAmortRemain=Math.max(amortPeriodsTotal-ioPeriods,1);
+  const ioPmt=P*iAccr;                    // interest-only payment (accrual basis)
+  const amortPmt = i===0 ? P/nAmortRemain : P*iAccr/(1-Math.pow(1+iAccr,-nAmortRemain));
+
+  // Build the schedule period-by-period through the term
+  const sched=[];
+  let bal=P, totalInt=0;
+  for(let p=1;p<=nTerm;p++){
+    const io = p<=ioPeriods;
+    const interest = bal*iAccr;
+    let pmt = io ? ioPmt : amortPmt;
+    let principal = io ? 0 : pmt-interest;
+    if(principal>bal){principal=bal;pmt=principal+interest;} // final cleanup
+    bal=Math.max(bal-principal,0);
+    totalInt+=interest;
+    sched.push({p,io,pmt,interest,principal,bal});
+  }
+  lastSchedule=sched;
+
+  const balloon=bal;
+  const periodicPaid=sched.reduce((s,r)=>s+r.pmt,0);
+  const totalPaid=periodicPaid+balloon;
+  const feeAmt=P*feePct;
+
+  // effective APR incl. fee: discount actual cashflows (payments + balloon) to net proceeds
+  const net=P-feeAmt;
+  let lo=0,hi=1,apr=annual;
+  for(let k=0;k<80;k++){
+    const r=(lo+hi)/2, pr=r/f;
+    let pv=0;
+    for(let p=1;p<=nTerm;p++) pv+=sched[p-1].pmt/Math.pow(1+pr,p);
+    pv+=balloon/Math.pow(1+pr,nTerm);
+    if(pv>net) lo=r; else hi=r;
+    apr=r;
+  }
+
+  // current (first) periodic payment shown on the card
+  const shownPmt=sched.length?sched[0].pmt:0;
+
+  $('payment').textContent=fmt2(shownPmt);
+  $('freqLabel').textContent=freqNames[f]+(ioPeriods>0?' · interest-only first':'');
+  $('totalPaid').textContent=fmt(totalPaid);
+  $('totalInt').textContent=fmt(totalInt);
+  $('balloon').textContent=fmt(balloon);
+  $('feeAmt').textContent=fmt(feeAmt);
+  $('apr').textContent=(apr*100).toFixed(3)+'%';
+
+  // IO summary row visibility
+  if(ioPeriods>0){
+    $('ioRow').style.display='';
+    $('ioPmt').textContent=fmt2(ioPmt)+' → '+fmt2(amortPmt);
+  }else{
+    $('ioRow').style.display='none';
+  }
+
+  const tot=P+totalInt;
+  $('barP').style.width=(P/tot*100)+'%';
+  $('barI').style.width=(totalInt/tot*100)+'%';
+
+  buildTable(sched,f,balloon);
+
+  // ---- Intermediate Functions metrics ----
+  if(mode==='intermediate'){
+    const noi=+$('noi').value||0;
+    const value=+$('value').value||0;
+    const cof=(+$('cof').value||0)/100;
+    const dscrMin=+$('dscrMin').value||0;
+    const ltvMax=(+$('ltvMax').value||0)/100;
+
+    // Annualized debt service: use the fully-amortizing payment (post-IO) as the
+    // binding case for coverage; IO-period coverage shown separately.
+    const annualDS_amort=amortPmt*f;
+    const annualDS_io=ioPmt*f;
+
+    // DSCR (post-IO / fully amortizing — the binding test)
+    const dscr = noi>0 && annualDS_amort>0 ? noi/annualDS_amort : null;
+    if(dscr!==null){
+      $('dscrVal').textContent=dscr.toFixed(2)+'x';
+      const pass=dscr>=dscrMin;
+      const b=$('dscrBadge');b.textContent=pass?`PASS ≥ ${dscrMin.toFixed(2)}x`:`FAIL < ${dscrMin.toFixed(2)}x`;
+      b.className='mbadge '+(pass?'pass':'fail');
+    }else{$('dscrVal').textContent='—';$('dscrBadge').textContent='enter NOI';$('dscrBadge').className='mbadge';}
+
+    // IO vs amortizing DSCR split
+    if(dscr!==null && ioPeriods>0){
+      const dscrIO=noi/annualDS_io;
+      $('dscrSplit').style.display='';
+      $('dscrSplit').innerHTML=`During IO: <b>${dscrIO.toFixed(2)}x</b> &nbsp;·&nbsp; After IO (binding): <b>${dscr.toFixed(2)}x</b> — coverage tightens once principal begins.`;
+    }else{$('dscrSplit').style.display='none';}
+
+    // LTV
+    if(value>0){
+      const ltv=P/value;
+      $('ltvVal').textContent=(ltv*100).toFixed(1)+'%';
+      const pass=ltv<=ltvMax;
+      const b=$('ltvBadge');b.textContent=pass?`PASS ≤ ${(ltvMax*100).toFixed(0)}%`:`FAIL > ${(ltvMax*100).toFixed(0)}%`;
+      b.className='mbadge '+(pass?'pass':'fail');
+    }else{$('ltvVal').textContent='—';$('ltvBadge').textContent='enter value';$('ltvBadge').className='mbadge';}
+
+    // Net spread & NII (loan yield over cost of funds)
+    const spread=annual-cof;
+    $('spreadVal').textContent=(spread*100).toFixed(2)+'%';
+    $('spreadSub').textContent=`${(annual*100).toFixed(2)}% loan − ${(cof*100).toFixed(2)}% CoF`;
+    const annualNII=P*spread;
+    $('niiLine').innerHTML=`<span>Est. annual net interest income</span><span class="nv">${fmt(annualNII)}</span>`;
+
+    // Yield to bank: effective annual yield incl. fees + day-count (annualized APR)
+    const yieldBank=apr; // apr already incorporates fees; bump for day-count via accrual
+    const effYield=yieldBank*dcMult;
+    $('yieldVal').textContent=(effYield*100).toFixed(2)+'%';
+    $('yieldSub').textContent = dc==='360' ? 'incl. fees · Actual/360' : 'incl. fees';
+
+    // ---- Stress strip ----
+    buildStress(P,annual,f,nAmortRemain,ioPeriods,dcMult,noi,dscrMin);
+    $('bankerOut').style.display='';
+  }else{
+    $('bankerOut').style.display='none';
+  }
+}
+
+// Rate stress: recompute amortizing payment & DSCR at rate shocks
+function buildStress(P,annual,f,nAmortRemain,ioPeriods,dcMult,noi,dscrMin){
+  const shocks=[0,1,2,3]; // +bps in whole %
+  let head='<tr><th>Rate</th><th>Amort. Pmt</th><th>Annual DS</th>'+(noi>0?'<th>DSCR</th>':'')+'</tr>';
+  let body='';
+  shocks.forEach(s=>{
+    const r=annual+s/100;
+    const ir=(r/f)*dcMult;
+    const pmt = ir===0 ? P/nAmortRemain : P*ir/(1-Math.pow(1+ir,-nAmortRemain));
+    const ds=pmt*f;
+    let dscrCell='';
+    if(noi>0){
+      const d=noi/ds;
+      const fail=d<dscrMin;
+      dscrCell=`<td class="${fail?'fail-cell':''}">${d.toFixed(2)}x</td>`;
+    }
+    const label = s===0?'Base':`+${s}.00%`;
+    body+=`<tr class="${s===0?'base':''}"><td>${label} (${(r*100).toFixed(2)}%)</td>`+
+      `<td>${fmt2(pmt)}</td><td>${fmt(ds)}</td>${dscrCell}</tr>`;
+  });
+  $('stressHead').innerHTML=head;
+  $('stressBody').innerHTML=body;
+}
+
+// Build the amortization schedule table
+function buildTable(sched,f,balloon){
+  const periodLabel={12:'Mo',4:'Qtr',2:'Half',1:'Yr'}[f]||'#';
+  let rows='';
+  sched.forEach(r=>{
+    rows+=`<tr${r.io?' class="io-period"':''}>
+      <td>${r.p}</td>
+      <td>${r.io?'<span class="io-tag">IO</span>':''}${fmt2(r.pmt)}</td>
+      <td>${fmt2(r.principal)}</td>
+      <td>${fmt2(r.interest)}</td>
+      <td>${fmt(r.bal)}</td></tr>`;
+  });
+  rows+=`<tr class="balloon-row">
+    <td>End</td><td colspan="3">Balloon principal due</td>
+    <td>${fmt(balloon)}</td></tr>`;
+  $('schedHead').innerHTML=
+    `<tr><th>${periodLabel}</th><th>Payment</th><th>Principal</th><th>Interest</th><th>Balance</th></tr>`;
+  $('schedBody').innerHTML=rows;
+}
+
+// Mode segmented control: Basic / Intermediate Functions / Advanced
+let mode='basic';
+const modeSeg=$('modeSeg');
+modeSeg.querySelectorAll('.mode-opt').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const m=btn.dataset.mode;
+    if(m==='advanced'){
+      // Advanced isn't a mode you stay in — it pitches Loan Command.
+      openModal('advanced');
+      return; // leave the current Basic/Intermediate selection intact
+    }
+    mode=m;
+    modeSeg.querySelectorAll('.mode-opt').forEach(b=>
+      b.classList.toggle('on',b.dataset.mode===mode));
+    $('bankerInputs').style.display = mode==='intermediate' ? '' : 'none';
+    showEmpty(); // require a fresh Calculate to reflect the new mode
+  });
+});
+
+// Results stay hidden until Calculate is pressed
+function showEmpty(){
+  $('resultsArea').style.display='none';
+  $('emptyState').style.display='';
+}
+// Revert to empty state whenever inputs change after a calculation
+document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',showEmpty));
+
+// Modal CTA controls
+const modal=$('modalOverlay');
+function openModal(ctx){
+  if(ctx==='advanced'){
+    $('modalTitle').textContent='See the whole deal, not just the payment.';
+    $('modalIntro').textContent='Floating-rate pricing, full profitability, and forward market conditions — built for bankers.';
+  }else{
+    $('modalTitle').textContent='This deal could be worth more.';
+    $('modalIntro').textContent='You just ran a fixed-rate estimate. See what the full picture looks like in Loan Command.';
+  }
+  modal.classList.add('open');
+}
+function closeModal(){modal.classList.remove('open');}
+$('modalClose').addEventListener('click',closeModal);
+modal.addEventListener('click',e=>{if(e.target===modal)closeModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();}});
+
+// Amortization schedule toggle
+$('schedToggle').addEventListener('click',()=>{
+  const sc=$('schedScroll'),btn=$('schedToggle');
+  const open=sc.style.display==='none';
+  sc.style.display=open?'':'none';
+  btn.classList.toggle('open',open);
+  btn.setAttribute('aria-expanded',open);
+  btn.querySelector('span').textContent=open?'Hide amortization schedule':'View amortization schedule';
+});
+
+// Calculate button: compute, reveal results, then fire the in-your-face CTA
+$('calcBtn').addEventListener('click',()=>{
+  calc();
+  $('emptyState').style.display='none';
+  $('resultsArea').style.display='';
+  setTimeout(()=>openModal('deal'),350);
+});
+</script>
+</body>
+</html>
