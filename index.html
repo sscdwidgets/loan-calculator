@@ -37,6 +37,19 @@
   }
   header h1{font-size:1.6rem;font-weight:700;letter-spacing:-.01em;color:var(--navy)}
   header p{color:var(--muted);font-size:.92rem;margin-top:4px}
+  .header-cta{
+    position:absolute;top:50%;right:32px;transform:translateY(-50%);z-index:3;
+    background:var(--gold);color:var(--navy);border:none;cursor:pointer;
+    font-family:inherit;font-size:1rem;font-weight:700;
+    padding:16px 28px;border-radius:11px;
+    box-shadow:0 6px 18px rgba(255,191,63,.5);transition:filter .15s,transform .05s;
+  }
+  .header-cta:hover{filter:brightness(.96)}
+  .header-cta:active{transform:translateY(-50%) scale(.98)}
+  @media(max-width:560px){
+    .header-cta{position:static;transform:none;margin-bottom:14px;width:100%}
+    .header-cta:active{transform:scale(.98)}
+  }
   .gold-rule{height:4px;background:var(--gold)}
   .grid{
     display:grid;grid-template-columns:1fr 1fr;gap:0;
@@ -183,15 +196,15 @@
   }
   .modal-overlay.open{opacity:1;pointer-events:auto}
   .modal{
-    background:#fff;border-radius:18px;max-width:440px;width:100%;overflow:hidden;
+    background:#fff;border-radius:18px;max-width:560px;width:100%;overflow:hidden;
     box-shadow:0 30px 80px rgba(0,20,55,.45);
     transform:scale(.9) translateY(10px);transition:transform .3s cubic-bezier(.34,1.56,.64,1);
-    position:relative;
+    position:relative;max-height:92vh;display:flex;flex-direction:column;
   }
   .modal-overlay.open .modal{transform:scale(1) translateY(0)}
   .modal-head{
     background:linear-gradient(135deg,var(--navy),#01285f);color:#fff;
-    padding:30px 30px 26px;position:relative;overflow:hidden;
+    padding:30px 30px 26px;position:relative;overflow:hidden;flex:none;
   }
   .modal-head::after{content:"";position:absolute;right:-50px;top:-50px;width:200px;
     height:200px;border-radius:50%;background:radial-gradient(circle,rgba(255,191,63,.3),transparent 70%)}
@@ -204,17 +217,15 @@
     border:none;color:#fff;width:32px;height:32px;border-radius:9px;cursor:pointer;
     font-size:1.2rem;line-height:1;transition:.15s;z-index:2}
   .modal-close:hover{background:rgba(255,255,255,.3)}
-  .modal-body{padding:24px 30px 28px}
+  .modal-body{padding:24px 30px 28px;overflow-y:auto}
   .modal-feat{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px}
   .modal-feat .ic{flex:none;width:36px;height:36px;border-radius:10px;
     background:rgba(255,191,63,.18);display:flex;align-items:center;justify-content:center;
     font-size:1.05rem}
   .modal-feat .ft{font-weight:700;color:var(--navy);font-size:.95rem}
   .modal-feat .fd{font-size:.8rem;color:var(--muted);margin-top:1px}
-  .modal-cta{display:block;text-align:center;text-decoration:none;margin-top:20px;
-    background:var(--gold);color:var(--navy);font-weight:700;font-size:1.02rem;
-    padding:15px;border-radius:11px;transition:filter .15s}
-  .modal-cta:hover{filter:brightness(.95)}
+  .sched-embed-wrap{margin-top:20px;padding-top:18px;border-top:1px solid var(--line)}
+  .sched-embed-title{font-size:.95rem;font-weight:700;color:var(--navy);margin-bottom:12px}
   @media(max-width:720px){.grid{grid-template-columns:1fr}
     .inputs{border-right:none;border-bottom:1px solid var(--line)}}
 </style>
@@ -222,6 +233,7 @@
 <body>
 <div class="wrap">
   <header>
+    <button class="header-cta" id="headerCta">Try Loan Command for Free</button>
     <h1>Commercial Loan Calculator</h1>
     <p>Estimate payments, total interest, and balloon balances</p>
     <div class="mode-seg" id="modeSeg" role="tablist">
@@ -416,8 +428,8 @@
     <div class="modal-head">
       <button class="modal-close" id="modalClose" aria-label="Close">×</button>
       <div class="eyebrow">Loan Command</div>
-      <h3 id="modalTitle">This deal could be worth more.</h3>
-      <p id="modalIntro">You just ran a fixed-rate estimate. See what the full picture looks like in Loan Command.</p>
+      <h3 id="modalTitle">See the whole deal, not just the payment.</h3>
+      <p id="modalIntro">Floating-rate pricing, full profitability, and forward market conditions — built for bankers.</p>
     </div>
     <div class="modal-body">
       <div class="modal-feat">
@@ -432,7 +444,12 @@
         <div class="ic">🔭</div>
         <div><div class="ft">Forward market conditions</div><div class="fd">Price against the forward curve and swap grid.</div></div>
       </div>
-      <a class="modal-cta" href="https://southstatecorrespondent.com/loan-command-demo-scheduler/" target="_blank" rel="noopener">Try Loan Command for Free →</a>
+      <div class="sched-embed-wrap">
+        <div class="sched-embed-title">Schedule a free walkthrough</div>
+        <!-- ScheduleOnce embed START -->
+        <div id="SOIDIV_JamesSpence" data-so-page="JamesSpence" data-height="550" data-style="border: 1px solid #d8d8d8; min-width: 290px; max-width: 900px;" data-psz="00"></div>
+        <!-- ScheduleOnce embed END -->
+      </div>
     </div>
   </div>
 </div>
@@ -660,17 +677,22 @@ document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input
 
 // Modal CTA controls
 const modal=$('modalOverlay');
+let soLoaded=false;
+function loadScheduler(){
+  if(soLoaded)return;soLoaded=true;
+  const s=document.createElement('script');
+  s.type='text/javascript';
+  s.src='https://cdn.oncehub.com/mergedjs/so.js';
+  document.body.appendChild(s);
+}
 function openModal(ctx){
-  if(ctx==='advanced'){
-    $('modalTitle').textContent='See the whole deal, not just the payment.';
-    $('modalIntro').textContent='Floating-rate pricing, full profitability, and forward market conditions — built for bankers.';
-  }else{
-    $('modalTitle').textContent='This deal could be worth more.';
-    $('modalIntro').textContent='You just ran a fixed-rate estimate. See what the full picture looks like in Loan Command.';
-  }
+  $('modalTitle').textContent='See the whole deal, not just the payment.';
+  $('modalIntro').textContent='Floating-rate pricing, full profitability, and forward market conditions — built for bankers.';
+  loadScheduler();
   modal.classList.add('open');
 }
 function closeModal(){modal.classList.remove('open');}
+$('headerCta').addEventListener('click',()=>openModal('header'));
 $('modalClose').addEventListener('click',closeModal);
 modal.addEventListener('click',e=>{if(e.target===modal)closeModal();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();}});
